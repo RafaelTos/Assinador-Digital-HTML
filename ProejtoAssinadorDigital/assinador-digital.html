@@ -4,129 +4,129 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Assinador Digital</title>
-    <!-- Carrega o Tailwind CSS para o estilo -->
+    <!-- Carrega Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Estilo para o "bloco" de assinatura */
-      canvas {
-        touch-action: none; /* Previne scroll da página ao desenhar no tablet */
-        border: 2px dashed #cbd5e1;
-        border-radius: 0.5rem;
+      /* Estilos para o canvas de assinatura */
+      .signature-canvas {
+        border: 2px dashed #ccc;
         cursor: crosshair;
-        background-color: #f8fafc;
+        background-color: #fff;
+        touch-action: none; /* Desabilita o scroll do touch no canvas */
       }
-      /* Estilo para a imagem da assinatura na lista de consulta */
-      .signature-image {
-        border: 1px solid #e5e7eb;
-        border-radius: 0.25rem;
-        background-color: #ffffff;
+      /* Estilo para a tab ativa */
+      .tab-button.active {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background-color: #f9fafb; /* Fundo leve para destaque */
       }
-      /* Classe para mostrar/esconder abas */
+      /* Estilo para a sub-tab ativa (Ativos/Desativados) */
+      .sub-tab-button.active {
+          background-color: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
+      }
       .tab-content {
         display: none;
       }
       .tab-content.active {
         display: block;
       }
-      /* Spinner para loading */
-      .spinner {
-        border-top-color: #3498db;
-        animation: spin 1s linear infinite;
+      /* Estilos para a lista de termos */
+      .term-item {
+        border-left: 5px solid #3b82f6;
       }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
+      .term-item.inactive {
+        border-left: 5px solid #ef4444; /* Cor vermelha para desativados */
+      }
+      /* Estilo para o modal de assinatura, para garantir que apareça acima de tudo */
+      #signature-detail-modal {
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s, visibility 0.3s;
+      }
+      #signature-detail-modal.active {
+        opacity: 1;
+        visibility: visible;
       }
     </style>
   </head>
   <body class="bg-gray-100 font-sans">
-    <!-- 
-      NOVO: Modal de Seleção de Empresa
-      Isso aparece primeiro, bloqueando o app até a seleção.
-    -->
+    <!-- Modal de Seleção de Empresa (Início) -->
     <div
       id="empresa-modal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75"
     >
-      <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Bem-vindo(a)</h2>
-        <p class="text-gray-600 mb-4">
-          Para continuar, por favor, selecione a empresa:
+      <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm transform transition-all duration-300 scale-100">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">👋 Bem-vindo(a)</h2>
+        <p class="text-gray-600 mb-6 text-center">
+          Para iniciar, por favor, selecione a empresa:
         </p>
         <select
           id="empresa-modal-select"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700"
         >
           <option value="">Selecione a Empresa</option>
-          <option value="empresa_a">Empresa A</option>
-          <option value="empresa_b">Empresa B</option>
-          <option value="empresa_c">Empresa C</option>
+          <option value="empresa_a">Empresa Alfa</option>
+          <option value="empresa_b">Empresa Beta</option>
+          <option value="empresa_c">Empresa Gama</option>
         </select>
         <div
           id="modal-message-box"
-          class="text-red-600 text-sm mt-2 hidden"
+          class="text-red-600 text-sm mt-3 p-2 bg-red-100 border border-red-400 rounded-md hidden"
         ></div>
         <button
           id="btn-continuar"
-          class="w-full mt-6 px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          class="w-full mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-150"
         >
           Continuar
         </button>
       </div>
     </div>
+    <!-- Modal de Seleção de Empresa (Fim) -->
 
-    <!-- 
-      Container principal 
-      NOVO: Adicionado ID 'main-app-container' para aplicar o efeito de blur
-    -->
     <div
       id="main-app-container"
       class="bg-gray-100 min-h-screen p-4 sm:p-8"
+      style="display: none;"
     >
-      <!-- Card principal do aplicativo -->
       <div
-        class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden"
+        class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden"
       >
-        <!-- Cabeçalho -->
-        <header class="bg-gray-800 text-white p-6">
-          <h1 class="text-2xl sm:text-3xl font-bold">
-            Sistema de Assinatura Digital
+        <header class="bg-gray-800 text-white p-6 rounded-t-xl">
+          <h1 class="text-2xl sm:text-3xl font-bold flex items-center">
+            📄 Sistema de Assinatura Digital
           </h1>
-          <p class="text-gray-300">
-            Gestão de termos e assinaturas internas
-          </p>
+          <p class="text-gray-400 text-sm">Empresa Ativa: <span id="current-empresa-name" class="font-medium text-blue-300"></span></p>
         </header>
 
-        <!-- Navegação por Abas -->
-        <nav class="flex border-b border-gray-200">
+        <!-- Navegação por Abas Principais -->
+        <nav class="flex border-b border-gray-200 bg-gray-50">
           <button
             id="btn-tab-assinar"
-            onclick="showTab('assinar')"
-            class="tab-button active flex-1 py-4 px-6 font-medium text-center focus:outline-none transition-colors duration-150 border-b-2 border-blue-600 text-blue-600"
+            data-tab="assinar"
+            class="tab-button active flex-1 py-4 px-6 font-semibold text-center focus:outline-none transition-colors duration-200 border-b-2"
           >
-            Assinar Documento
+            ✍️ Assinar Documento
           </button>
           <button
             id="btn-tab-consultar"
-            onclick="showTab('consultar')"
-            class="tab-button flex-1 py-4 px-6 font-medium text-center focus:outline-none transition-colors duration-150 text-gray-500 hover:text-gray-700"
+            data-tab="consultar"
+            class="tab-button flex-1 py-4 px-6 font-semibold text-center focus:outline-none transition-colors duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-100"
           >
-            Consultar Termos
+            📂 Consultar Termos
           </button>
         </nav>
 
-        <!-- Conteúdo das Abas -->
         <main class="p-6 sm:p-8">
-          <!-- ABA: ASSINAR DOCUMENTO -->
+          <!-- Seção de Assinatura -->
           <section id="tab-assinar" class="tab-content active space-y-6">
-            <h2 class="text-xl font-semibold text-gray-800">
+            <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">
               Novo Termo de Assinatura
             </h2>
 
-            <!-- Formulário de Dados -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Empresa (agora pré-preenchido e desabilitado) -->
+            <!-- Formulário de Assinatura -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
                   for="empresa"
@@ -135,16 +135,12 @@
                 >
                 <select
                   id="empresa"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-gray-100"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100 cursor-not-allowed"
                   disabled
                 >
-                  <option value="">Selecione a Empresa</option>
-                  <option value="empresa_a">Empresa A</option>
-                  <option value="empresa_b">Empresa B</option>
-                  <option value="empresa_c">Empresa C</option>
+                  <option value="">Carregando...</option>
                 </select>
               </div>
-              <!-- Departamento -->
               <div>
                 <label
                   for="department"
@@ -153,15 +149,14 @@
                 >
                 <select
                   id="department"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="dp">DP</option>
+                  <option value="dp">DP (Departamento Pessoal)</option>
                   <option value="admissao">Admissão</option>
                   <option value="juridico">Jurídico</option>
                   <option value="comercial">Comercial</option>
                 </select>
               </div>
-              <!-- Nome Completo -->
               <div>
                 <label
                   for="name"
@@ -171,11 +166,10 @@
                 <input
                   type="text"
                   id="name"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Digite o nome completo"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Digite o nome completo do colaborador"
                 />
               </div>
-              <!-- RE / RG / CPF -->
               <div>
                 <label
                   for="documentId"
@@ -185,11 +179,10 @@
                 <input
                   type="text"
                   id="documentId"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Digite o documento"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: 123.456.789-00"
                 />
               </div>
-              <!-- Email -->
               <div>
                 <label
                   for="email"
@@ -199,11 +192,10 @@
                 <input
                   type="email"
                   id="email"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Digite o email"
                 />
               </div>
-              <!-- Telefone -->
               <div>
                 <label
                   for="telefone"
@@ -213,11 +205,10 @@
                 <input
                   type="tel"
                   id="telefone"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Digite o telefone"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ex: (99) 99999-9999"
                 />
               </div>
-              <!-- Centro de Custos -->
               <div class="md:col-span-2">
                 <label
                   for="centroCusto"
@@ -227,742 +218,802 @@
                 <input
                   type="text"
                   id="centroCusto"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Digite o centro de custos"
                 />
               </div>
             </div>
+            
+            <!-- Novos campos: Tipo de Termo e Conteúdo do Termo -->
+            <div class="md:col-span-2 space-y-4 pt-4">
+              <label for="termType" class="block text-sm font-medium text-gray-700 mb-1"
+                >Tipo de Termo a Assinar</label
+              >
+              <select
+                id="termType"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="">Selecione o Tipo de Termo</option>
+                <option value="emprestimo">Termo de Empréstimo de Equipamentos</option>
+                <option value="uso">Termo de Uso e Políticas de Segurança</option>
+              </select>
 
-            <!-- Bloco com Duas Assinaturas (Canvas) -->
-            <div class="space-y-4">
-              <!-- Assinatura do Colaborador -->
+              <!-- Área de Exibição do Termo -->
+              <div id="term-content-display" class="bg-gray-50 border border-gray-300 p-4 rounded-lg h-60 overflow-y-auto text-sm text-gray-700">
+                Selecione um tipo de termo acima para visualizar o conteúdo.
+              </div>
+              
+              <div class="flex items-start">
+                <input type="checkbox" id="term-agreement" class="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <label for="term-agreement" class="ml-2 block text-sm text-gray-800 select-none cursor-pointer">
+                  Declaro que li e concordo com os termos acima.
+                </label>
+              </div>
+            </div>
+            <!-- Fim dos Novos campos -->
+
+            <!-- Áreas de Assinatura -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
               <div>
                 <label
-                  class="block text-sm font-medium text-gray-700 mb-1"
-                  >Assinatura do Colaborador</label
+                  class="block text-sm font-medium text-gray-700 mb-2"
+                  >Assinatura do Colaborador (Desenhe aqui)</label
                 >
                 <canvas
                   id="colaboradorCanvas"
-                  class="w-full"
-                  height="200"
+                  class="signature-canvas w-full rounded-lg"
+                  height="150"
                 ></canvas>
               </div>
-              <!-- Assinatura do Suporte -->
               <div>
                 <label
-                  class="block text-sm font-medium text-gray-700 mb-1"
-                  >Assinatura do Suporte</label
+                  class="block text-sm font-medium text-gray-700 mb-2"
+                  >Assinatura do Suporte (Desenhe aqui)</label
                 >
                 <canvas
                   id="suporteCanvas"
-                  class="w-full"
-                  height="200"
+                  class="signature-canvas w-full rounded-lg"
+                  height="150"
                 ></canvas>
               </div>
             </div>
 
-            <!-- Mensagens de Erro ou Sucesso -->
+            <!-- Caixa de Mensagens (Assinar) -->
             <div
               id="message-box"
-              class="border p-3 rounded-md text-sm hidden"
+              class="p-4 rounded-lg text-sm hidden transition-all duration-300"
             ></div>
 
             <!-- Botões de Ação -->
-            <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 id="btn-save"
-                class="w-full sm:w-auto flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-150"
+                class="w-full sm:w-auto flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-150"
               >
-                Salvar Assinatura
+                Salvar Assinatura Digital
               </button>
               <button
                 id="btn-clear"
-                class="w-full sm:w-auto flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-medium rounded-md shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors duration-150"
+                class="w-full sm:w-auto flex-1 px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-opacity-50 transition-colors duration-150"
               >
                 Limpar Assinaturas
               </button>
             </div>
           </section>
 
-          <!-- ABA: CONSULTAR TERMOS -->
-          <section id="tab-consultar" class="tab-content">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+          <!-- Seção de Consulta -->
+          <section id="tab-consultar" class="tab-content space-y-6">
+            <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">
               Termos Assinados
             </h2>
-
-            <!-- Filtros -->
-            <div class="flex gap-4 mb-4 flex-wrap">
-              <select
-                id="filter-department"
-                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value="todos">Todos Departamentos</option>
-                <option value="dp">DP</option>
-                <option value="admissao">Admissão</option>
-                <option value="juridico">Jurídico</option>
-                <option value="comercial">Comercial</option>
-              </select>
-              <select
-                id="filter-status"
-                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value="todos">Todos Status</option>
-                <option value="ativo">Ativos</option>
-                <option value="desativado">Desativados</option>
-              </select>
-              <select
-                id="filter-empresa"
-                class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value="todos">Todas Empresas</option>
-                <option value="empresa_a">Empresa A</option>
-                <option value="empresa_b">Empresa B</option>
-                <option value="empresa_c">Empresa C</option>
-              </select>
+            
+            <!-- SUB-ABAS ATIVOS/DESATIVADOS -->
+            <div class="flex border-b border-gray-200">
+                <button
+                    id="btn-status-ativo"
+                    data-status="ativo"
+                    class="sub-tab-button active px-6 py-2 font-semibold rounded-t-lg border-b-2 border-transparent hover:border-blue-500 hover:text-blue-600 transition-colors duration-150"
+                >
+                    ✅ Ativos
+                </button>
+                <button
+                    id="btn-status-desativado"
+                    data-status="desativado"
+                    class="sub-tab-button px-6 py-2 font-semibold text-gray-600 rounded-t-lg border-b-2 border-transparent hover:border-red-500 hover:text-red-600 transition-colors duration-150"
+                >
+                    ❌ Desativados
+                </button>
             </div>
+            <!-- FIM SUB-ABAS -->
 
-            <!-- Lista de Assinaturas -->
-            <div id="loading-state" class="text-center py-10 text-gray-500">
-              Carregando termos...
+            <!-- Filtros e Busca -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+              <!-- Barra de Pesquisa -->
+              <div class="sm:col-span-2">
+                <label
+                  for="search-term"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Buscar por Nome/Documento</label
+                >
+                <input
+                  type="text"
+                  id="search-term"
+                  placeholder="Ex: João Silva ou 123.456"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <!-- Filtro de Departamento -->
+              <div>
+                <label
+                  for="filter-department"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Departamento</label
+                >
+                <select
+                  id="filter-department"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="dp">DP</option>
+                  <option value="admissao">Admissão</option>
+                  <option value="juridico">Jurídico</option>
+                  <option value="comercial">Comercial</option>
+                </select>
+              </div>
+              
+              <!-- Filtro de Empresa (Apenas para Leitura) -->
+              <div>
+                <label
+                  for="filter-empresa"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >Empresa</label
+                >
+                <select
+                  id="filter-empresa"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100 cursor-not-allowed"
+                  disabled
+                >
+                  <option value="todos">Empresa Atual</option>
+                </select>
+              </div>
+            </div>
+            
+            <div id="loading-state" class="text-center py-10 text-blue-600 font-semibold text-lg hidden">
+              <!-- Estado de Carregamento (Oculto, pois não há carregamento assíncrono) -->
             </div>
             <div id="empty-state" class="text-center py-10 text-gray-500 hidden">
-              Nenhum termo encontrado com os filtros selecionados.
+              <p class="text-xl mb-2">Nenhum termo encontrado 🤷</p>
+              <p>Altere os filtros ou adicione uma nova assinatura.</p>
             </div>
             <div id="assinaturas-list" class="space-y-4">
-              <!-- As assinaturas serão injetadas aqui pelo JavaScript -->
             </div>
           </section>
         </main>
       </div>
 
-      <!-- Footer com ID (opcional, para debug) -->
-      <footer class="text-center text-xs text-gray-500 mt-4">
-        ID de Sessão: <span id="user-id-span">...</span>
+      <footer class="text-center text-xs text-gray-500 mt-6">
+        Dados salvos localmente no seu navegador (Local Storage).
       </footer>
     </div>
 
-    <!--
-    ================================================================
-    SCRIPT DE LÓGICA DO APLICATIVO
-    ================================================================
-    -->
-    <!-- Carrega os módulos do Firebase -->
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-      import {
-        getAuth,
-        signInAnonymously,
-        onAuthStateChanged,
-      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-      import {
-        getFirestore,
-        doc,
-        addDoc,
-        updateDoc,
-        onSnapshot,
-        collection,
-        query,
-        Timestamp,
-        setLogLevel,
-      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Script JavaScript -->
+    <script>
+      // ----------------------------------------------------
+      // 1. CONFIGURAÇÃO INICIAL E VARIÁVEIS GLOBAIS
+      // ----------------------------------------------------
+      
+      let currentEmpresa = null;
+      let currentViewStatus = 'ativo'; // Novo estado para as sub-abas
+      const LOCAL_STORAGE_KEY = 'assinaturas_digitais';
 
-      // =================================================================
-      // PASSO 1: COLE A CONFIGURAÇÃO DO SEU FIREBASE AQUI
-      // 1. Crie um projeto no firebase.google.com
-      // 2. Clique em "Adicionar app" > "Web" (ícone </>)
-      // 3. Copie o objeto 'firebaseConfig' e cole abaixo
-      // =================================================================
-
-      const SEU_FIREBASE_CONFIG = null;
-
-      // =================================================================
-      // FIM DO PASSO 1
-      // =================================================================
-
-      // =================================================================
-      // PASSO 2: CAMINHO DO BANCO DE DADOS
-      // Este é o "caminho" na nuvem onde os dados serão salvos.
-      // Você deve configurar as Regras de Segurança no seu Firebase.
-      //
-      // Regras (Cole isso na aba 'Regras' do seu Firestore):
-      /*
-      rules_version = '2';
-      service cloud.firestore {
-        match /databases/{database}/documents {
-          // Permite que usuários anonimamente logados leiam e escrevam
-          match /assinaturas/meu-app-assinatura/termos/{termoId} {
-            allow read, write: if request.auth != null;
-          }
-        }
-      }
-      */
-      // =================================================================
-
-      const COLLECTION_PATH = "/assinaturas/meu-app-assinatura/termos";
-
-      // --- Variáveis Globais do App ---
-      let app, auth, db;
-      let userId = null;
-      let allAssinaturas = []; // Cache de todos os termos
-      let unsubscribeFirestore = null; // Função para parar de ouvir o DB
-
-      // --- Elementos do DOM ---
-      const messageBox = document.getElementById("message-box");
-      const btnSave = document.getElementById("btn-save");
-      const btnClear = document.getElementById("btn-clear");
-      const userIdSpan = document.getElementById("user-id-span");
-
-      // Campos do Formulário
-      const inputName = document.getElementById("name");
-      const inputDocId = document.getElementById("documentId");
-      const inputEmail = document.getElementById("email");
-      const inputTelefone = document.getElementById("telefone");
-      const selectEmpresa = document.getElementById("empresa");
-      const selectDepartment = document.getElementById("department");
-      const inputCentroCusto = document.getElementById("centroCusto");
-
-      // Abas
-      const tabAssinar = document.getElementById("tab-assinar");
-      const tabConsultar = document.getElementById("tab-consultar");
-      const btnTabAssinar = document.getElementById("btn-tab-assinar");
-      const btnTabConsultar = document.getElementById("btn-tab-consultar");
-
-      // Consulta
-      const listContainer = document.getElementById("assinaturas-list");
-      const loadingState = document.getElementById("loading-state");
-      const emptyState = document.getElementById("empty-state");
-      const filterDept = document.getElementById("filter-department");
-      const filterStatus = document.getElementById("filter-status");
-      const filterEmpresa = document.getElementById("filter-empresa");
-
-      // NOVO: Elementos do Modal
-      const empresaModal = document.getElementById("empresa-modal");
-      const empresaModalSelect = document.getElementById(
-        "empresa-modal-select"
-      );
-      const btnContinuar = document.getElementById("btn-continuar");
-      const modalMessageBox = document.getElementById("modal-message-box");
-      const mainAppContainer = document.getElementById("main-app-container");
-
-      // --- Funções Auxiliares ---
-
-      /**
-       * Mostra ou esconde as abas
-       */
-      window.showTab = (tabName) => {
-        if (tabName === "assinar") {
-          tabAssinar.classList.add("active");
-          tabConsultar.classList.remove("active");
-          btnTabAssinar.classList.add(
-            "border-blue-600",
-            "text-blue-600"
-          );
-          btnTabAssinar.classList.remove("text-gray-500", "hover:text-gray-700");
-          btnTabConsultar.classList.remove(
-            "border-blue-600",
-            "text-blue-600"
-          );
-          btnTabConsultar.classList.add(
-            "text-gray-500",
-            "hover:text-gray-700"
-          );
-        } else {
-          tabAssinar.classList.remove("active");
-          tabConsultar.classList.add("active");
-          btnTabConsultar.classList.add(
-            "border-blue-600",
-            "text-blue-600"
-          );
-          btnTabConsultar.classList.remove(
-            "text-gray-500",
-            "hover:text-gray-700"
-          );
-          btnTabAssinar.classList.remove(
-            "border-blue-600",
-            "text-blue-600"
-          );
-          btnTabAssinar.classList.add("text-gray-500", "hover:text-gray-700");
-        }
+      const EMPRESA_MAP = {
+        'empresa_a': 'Empresa Alfa',
+        'empresa_b': 'Empresa Beta',
+        'empresa_c': 'Empresa Gama'
       };
 
-      /**
-       * Mostra uma mensagem de feedback (sucesso ou erro)
-       */
-      function showMessage(message, type = "error") {
-        messageBox.classList.remove("hidden", "bg-red-100", "bg-green-100");
-        if (type === "error") {
-          messageBox.classList.add(
-            "bg-red-100",
-            "border-red-300",
-            "text-red-800"
-          );
+      // Mapeamento de Departamentos para exibição
+      const DEPARTMENT_MAP = {
+        'dp': 'DP',
+        'admissao': 'Admissão',
+        'juridico': 'Jurídico',
+        'comercial': 'Comercial'
+      };
+      
+      // Mapeamento de Tipos de Termo para exibição
+      const TERM_MAP = {
+        'emprestimo': 'Empréstimo',
+        'uso': 'Uso',
+      };
+      
+      // Conteúdo dos Termos (Hardcoded para demonstração sem backend)
+      const TERMS_CONTENT = {
+        'emprestimo': `
+            <h4 class="font-bold mb-2">TERMO DE EMPRÉSTIMO DE EQUIPAMENTOS</h4>
+            <p class="mb-3">Eu, [Nome do Colaborador], portador do documento [RE/RG/CPF], declaro ter recebido da [Empresa Ativa] os seguintes equipamentos em regime de comodato para uso exclusivo em minhas atividades laborais, comprometendo-me a zelar por sua integridade e conservação:</p>
+            <ul class="list-disc list-inside ml-4 mb-3">
+                <li>Notebook (Modelo: XXX, Série: YYY)</li>
+                <li>Mouse e Teclado (Modelo: ZZZ)</li>
+                <li>Monitor (Modelo: AAA)</li>
+            </ul>
+            <p>O presente Termo de Empréstimo é válido durante todo o período do vínculo empregatício e deverá ser devolvido imediatamente em caso de rescisão ou solicitação da empresa. A não devolução ou devolução em estado inadequado implicará em ressarcimento financeiro.</p>
+        `,
+        'uso': `
+            <h4 class="font-bold mb-2">TERMO DE USO DE SOFTWARES E POLÍTICAS DE SEGURANÇA</h4>
+            <p class="mb-3">Eu, [Nome do Colaborador], concordo em cumprir integralmente todas as políticas de segurança da informação e uso de softwares da [Empresa Ativa], incluindo, mas não se limitando a:</p>
+            <ul class="list-disc list-inside ml-4 mb-3">
+                <li>Não compartilhar credenciais de acesso.</li>
+                <li>Utilizar softwares e licenças apenas para fins corporativos.</li>
+                <li>Proteger informações confidenciais contra acesso não autorizado.</li>
+                <li>Realizar backups conforme orientação do departamento de TI.</li>
+            </ul>
+            <p>O uso inadequado dos recursos de TI pode resultar em medidas disciplinares, conforme previsto no Código de Conduta da empresa.</p>
+        `
+      };
+
+      // ----------------------------------------------------
+      // 2. FUNÇÕES DE UTILIDADE (UI)
+      // ----------------------------------------------------
+
+      function displayMessage(message, isError = false, targetId = 'message-box') {
+        const box = document.getElementById(targetId);
+        if (!box) return;
+
+        box.textContent = message;
+        box.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'border-red-400', 'bg-green-100', 'text-green-700', 'border-green-400');
+
+        if (isError) {
+          box.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-400');
         } else {
-          messageBox.classList.add(
-            "bg-green-100",
-            "border-green-300",
-            "text-green-800"
-          );
+          box.classList.add('bg-green-100', 'text-green-700', 'border', 'border-green-400');
         }
-        messageBox.textContent = message;
+        
+        // Esconde a mensagem após 5 segundos
+        setTimeout(() => box.classList.add('hidden'), 5000);
       }
 
-      function hideMessage() {
-        messageBox.classList.add("hidden");
-      }
-
-      /**
-       * Limpa o formulário e os canvases
-       */
-      function resetForm() {
-        inputName.value = "";
-        inputDocId.value = "";
-        inputEmail.value = "";
-        inputTelefone.value = "";
-        // Não limpa a empresa, pois ela foi selecionada no início
-        // selectEmpresa.value = "";
-        selectDepartment.value = "dp";
-        inputCentroCusto.value = "";
-        canvasColaborador.clear();
-        canvasSuporte.clear();
-        hideMessage();
-      }
-
-      // --- Lógica do Canvas de Assinatura ---
-      // Esta classe gerencia um único canvas
-      class SignatureCanvas {
-        constructor(canvasId) {
-          this.canvas = document.getElementById(canvasId);
-          if (!this.canvas) {
-            console.error(`Canvas com ID ${canvasId} não encontrado.`);
-            return;
-          }
-          this.ctx = this.canvas.getContext("2d");
-          this.isDrawing = false;
-          this.blankDataUrl = null; // Armazena a imagem em branco
-
-          this.init();
-        }
-
-        init() {
-          // Ajusta o tamanho do canvas para o tamanho real na tela
-          this.canvas.width = this.canvas.offsetWidth;
-          this.canvas.height = this.canvas.offsetHeight;
-
-          this.ctx.strokeStyle = "#000000";
-          this.ctx.lineWidth = 2;
-          this.ctx.lineCap = "round";
-          this.ctx.lineJoin = "round";
-
-          // Armazena a imagem em branco para validação
-          this.blankDataUrl = this.canvas.toDataURL("image/png");
-
-          // Eventos de Mouse
-          this.canvas.addEventListener("mousedown", (e) => this.startDrawing(e));
-          this.canvas.addEventListener("mousemove", (e) => this.draw(e));
-          this.canvas.addEventListener("mouseup", () => this.stopDrawing());
-          this.canvas.addEventListener("mouseout", () => this.stopDrawing());
-
-          // Eventos de Toque (para tablets)
-          this.canvas.addEventListener(
-            "touchstart",
-            (e) => this.startDrawing(e)
-          );
-          this.canvas.addEventListener("touchmove", (e) => this.draw(e));
-          this.canvas.addEventListener("touchend", () => this.stopDrawing());
-        }
-
-        getCoords(e) {
-          e.preventDefault();
-          const rect = this.canvas.getBoundingClientRect();
-          let event = e;
-
-          if (window.TouchEvent && e instanceof TouchEvent) {
-            event = e.changedTouches[0] || e.touches[0];
-          }
-
-          return {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-          };
-        }
-
-        startDrawing(e) {
-          const { x, y } = this.getCoords(e);
-          this.isDrawing = true;
-          this.ctx.beginPath();
-          this.ctx.moveTo(x, y);
-        }
-
-        draw(e) {
-          if (!this.isDrawing) return;
-          const { x, y } = this.getCoords(e);
-          this.ctx.lineTo(x, y);
-          this.ctx.stroke();
-        }
-
-        stopDrawing() {
-          this.isDrawing = false;
-          this.ctx.beginPath();
-        }
-
-        clear() {
-          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-
-        getDataURL() {
-          return this.canvas.toDataURL("image/png");
-        }
-
-        // Verifica se o canvas está em branco
-        isBlank() {
-          return this.getDataURL() === this.blankDataUrl;
-        }
-      }
-
-      // Inicializa os dois canvases
-      let canvasColaborador, canvasSuporte;
-
-      // --- Lógica do Firebase ---
-
-      /**
-       * 1. Inicializa o Firebase e a Autenticação
-       */
-      function initializeAppAndAuth() {
-        if (!SEU_FIREBASE_CONFIG) {
-          showMessage(
-            "Erro Crítico: A configuração do Firebase não foi definida. Edite o arquivo .html e cole sua 'firebaseConfig' na variável 'SEU_FIREBASE_CONFIG'."
-          );
-          console.error(
-            "SEU_FIREBASE_CONFIG não está definida. O app não pode funcionar."
-          );
-          // NOVO: Esconde o modal e mostra o erro principal
-          empresaModal.style.display = "none";
-          mainAppContainer.style.filter = "none";
-          return;
-        }
-
-        try {
-          app = initializeApp(SEU_FIREBASE_CONFIG);
-          auth = getAuth(app);
-          db = getFirestore(app);
-          setLogLevel("debug"); // Mostra logs detalhados do Firebase no console
-
-          // Adiciona o listener de autenticação
-          onAuthStateChanged(auth, async (user) => {
-            if (user) {
-              // Usuário está logado (anonimamente)
-              userId = user.uid;
-              userIdSpan.textContent = userId;
-              console.log("Logado com UID:", userId);
-
-              // Só agora podemos inicializar os listeners do Firestore
-              setupFirestoreListener();
-            } else {
-              // Usuário não está logado, tenta logar
-              console.log("Usuário não logado, tentando login anônimo...");
-              userId = null;
-              userIdSpan.textContent = "Autenticando...";
-              if (unsubscribeFirestore) unsubscribeFirestore(); // Para de ouvir o DB
-
-              try {
-                // CORREÇÃO: Usamos apenas signInAnonymously.
-                // Não há __initial_auth_token neste modo simples.
-                await signInAnonymously(auth);
-              } catch (error) {
-                console.error("Erro no login anônimo:", error);
-                showMessage(
-                  "Erro de autenticação. Verifique as regras do Firebase."
-                );
-              }
-            }
-          });
-        } catch (error) {
-          console.error("Erro ao inicializar o Firebase:", error);
-          showMessage(
-            "Erro ao inicializar o Firebase. Verifique sua 'firebaseConfig'."
-          );
-          // NOVO: Esconde o modal e mostra o erro principal
-          empresaModal.style.display = "none";
-          mainAppContainer.style.filter = "none";
-        }
-      }
-
-      /**
-       * 2. Ouve as mudanças no Firestore (em tempo real)
-       */
-      function setupFirestoreListener() {
-        if (unsubscribeFirestore) {
-          unsubscribeFirestore(); // Para o listener anterior se existir
-        }
-
-        if (!db || !COLLECTION_PATH) return;
-
-        console.log("Configurando listener do Firestore para:", COLLECTION_PATH);
-        loadingState.style.display = "block";
-        emptyState.style.display = "none";
-        listContainer.innerHTML = "";
-
-        const q = query(collection(db, COLLECTION_PATH));
-
-        unsubscribeFirestore = onSnapshot(
-          q,
-          (snapshot) => {
-            console.log("Dados recebidos:", snapshot.docs.length);
-            allAssinaturas = snapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-            // Ordena os mais novos primeiro
-            allAssinaturas.sort(
-              (a, b) => b.createdAt.toDate() - a.createdAt.toDate()
-            );
-
-            renderAssinaturas(); // Atualiza a lista na tela
-          },
-          (error) => {
-            console.error("Erro ao ouvir Firestore:", error);
-            showMessage("Erro ao carregar dados. Verifique a conexão.");
-            loadingState.style.display = "none";
-          }
-        );
-      }
-
-      /**
-       * 3. Renderiza a lista de assinaturas na tela
-       */
-      function renderAssinaturas() {
-        const dept = filterDept.value;
-        const status = filterStatus.value;
-        const empresa = filterEmpresa.value;
-
-        const filteredList = allAssinaturas.filter((a) => {
-          const deptMatch = dept === "todos" || a.department === dept;
-          const statusMatch = status === "todos" || a.status === status;
-          const empresaMatch = empresa === "todos" || a.empresa === empresa;
-          return deptMatch && statusMatch && empresaMatch;
+      function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
         });
+        document.getElementById(`tab-${tabId}`).classList.add('active');
 
-        listContainer.innerHTML = ""; // Limpa a lista
-        loadingState.style.display = "none";
+        document.querySelectorAll('.tab-button').forEach(button => {
+          button.classList.remove('active', 'border-blue-600', 'text-blue-600', 'bg-gray-50');
+          button.classList.add('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-100');
+        });
+        const activeBtn = document.getElementById(`btn-tab-${tabId}`);
+        activeBtn.classList.add('active', 'border-blue-600', 'text-blue-600', 'bg-gray-50');
+        activeBtn.classList.remove('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-100');
 
-        if (filteredList.length === 0) {
-          emptyState.style.display = "block";
-        } else {
-          emptyState.style.display = "none";
-          filteredList.forEach((assinatura) => {
-            const date = assinatura.createdAt.toDate().toLocaleString("pt-BR", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-            const statusClass =
-              assinatura.status === "ativo"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800";
-
-            const empresaLabel = assinatura.empresa.replace("_", " ");
-
-            // HTML para o card do termo
-            const cardHtml = `
-              <div class="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row gap-4">
-                <!-- Coluna de Informações -->
-                <div class="flex-1 space-y-2">
-                  <h3 class="text-lg font-semibold text-gray-900">${
-                    assinatura.name
-                  }</h3>
-                  <p class="text-sm text-gray-600"><strong>Doc:</strong> ${
-                    assinatura.documentId
-                  }</p>
-                  <p class="text-sm text-gray-600"><strong>Email:</strong> ${
-                    assinatura.email || "N/A"
-                  }</p>
-                  <p class="text-sm text-gray-600"><strong>Telefone:</strong> ${
-                    assinatura.telefone || "N/A"
-                  }</p>
-                  <p class="text-sm text-gray-600"><strong>Centro de Custo:</strong> ${
-                    assinatura.centroCusto || "N/A"
-                  }</p>
-                  <p class="text-sm text-gray-600"><strong>Data:</strong> ${date}</p>
-                  <div class="flex items-center gap-4 flex-wrap">
-                    <span class="text-xs font-medium capitalize px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-800">${empresaLabel}</span>
-                    <span class="text-xs font-medium uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${
-                      assinatura.department
-                    }</span>
-                    <span class="text-xs font-medium capitalize px-2.5 py-0.5 rounded-full ${statusClass}">${
-              assinatura.status
-            }</span>
-                  </div>
-                </div>
-
-                <!-- Coluna das Assinaturas e Ação -->
-                <div class="flex flex-col items-center sm:items-end gap-2 sm:w-1/3">
-                  <div>
-                    <label class="text-xs font-medium text-gray-500">Ass. Colaborador</label>
-                    <img src="${
-                      assinatura.colaboradorSignatureDataUrl
-                    }" alt="Assinatura Colaborador" class="signature-image w-full h-auto max-w-[200px]" />
-                  </div>
-                  <div class="mt-2">
-                    <label class="text-xs font-medium text-gray-500">Ass. Suporte</label>
-                    <img src="${
-                      assinatura.suporteSignatureDataUrl
-                    }" alt="Assinatura Suporte" class="signature-image w-full h-auto max-w-[200px]" />
-                  </div>
-                  ${
-                    assinatura.status === "ativo"
-                      ? `<button 
-                            data-id="${assinatura.id}" 
-                            class="btn-deactivate mt-2 px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full max-w-[200px]"
-                          >
-                            Desativar Termo
-                          </button>`
-                      : ""
-                  }
-                </div>
-              </div>
-            `;
-            listContainer.insertAdjacentHTML("beforeend", cardHtml);
+        if (tabId === 'consultar') {
+            loadAndFilterAssinaturas();
+        }
+      }
+      
+      // Nova função para alternar entre Ativos e Desativados
+      function switchStatusView(status) {
+          currentViewStatus = status;
+          document.querySelectorAll('.sub-tab-button').forEach(button => {
+              button.classList.remove('active');
+              button.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+              button.classList.add('text-gray-600');
           });
+          const activeBtn = document.getElementById(`btn-status-${status}`);
+          activeBtn.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+          activeBtn.classList.remove('text-gray-600');
+          
+          loadAndFilterAssinaturas(); // Recarrega a lista com o novo filtro
+      }
+
+      function updateTermContent() {
+        const termType = document.getElementById('termType').value;
+        const displayDiv = document.getElementById('term-content-display');
+        
+        if (termType && TERMS_CONTENT[termType]) {
+            let content = TERMS_CONTENT[termType];
+            
+            // Personalização do Conteúdo (Substituir placeholders)
+            const name = document.getElementById('name').value.trim() || '[Nome do Colaborador]';
+            const docId = document.getElementById('documentId').value.trim() || '[RE/RG/CPF]';
+            const empresaNome = EMPRESA_MAP[currentEmpresa] || '[Empresa Ativa]';
+
+            // Substitui todos os placeholders no texto do termo
+            content = content.replace(/\[Nome do Colaborador\]/g, name);
+            content = content.replace(/\[RE\/RG\/CPF\]/g, docId);
+            content = content.replace(/\[Empresa Ativa\]/g, empresaNome);
+
+            displayDiv.innerHTML = content;
+            displayDiv.classList.add('bg-white', 'border-blue-300');
+            displayDiv.classList.remove('bg-gray-50', 'border-gray-300');
+        } else {
+            displayDiv.innerHTML = 'Selecione um tipo de termo acima para visualizar o conteúdo.';
+            displayDiv.classList.remove('bg-white', 'border-blue-300');
+            displayDiv.classList.add('bg-gray-50', 'border-gray-300');
         }
       }
 
-      /**
-       * 4. Salva a assinatura no Firestore
-       */
-      async function saveSignature() {
-        // Validação dos campos de texto
-        const formData = {
-          name: inputName.value,
-          documentId: inputDocId.value,
-          email: inputEmail.value,
-          telefone: inputTelefone.value,
-          empresa: selectEmpresa.value, // Já está preenchido
-          department: selectDepartment.value,
-          centroCusto: inputCentroCusto.value,
+      // ----------------------------------------------------
+      // 3. LÓGICA DO CANVAS (Assinaturas)
+      // ----------------------------------------------------
+
+      const canvasState = {};
+      const canvases = {};
+
+      function initCanvas(canvasElement) {
+        const ctx = canvasElement.getContext('2d');
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000000';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvasElement.width, canvasElement.height); // Garante fundo branco
+
+        canvasState[canvasElement.id] = {
+          drawing: false,
+          lastX: 0,
+          lastY: 0,
+          isSigned: false,
+          ctx: ctx
         };
 
-        if (
-          !formData.name ||
-          !formData.documentId ||
-          !formData.email ||
-          !formData.empresa || // Validação extra
-          !formData.centroCusto
-        ) {
-          showMessage(
-            "Nome, Documento, Email, Empresa e Centro de Custos são obrigatórios."
-          );
-          return;
-        }
+        const state = canvasState[canvasElement.id];
+        
+        const startDraw = (e) => {
+          state.drawing = true;
+          state.isSigned = true;
+          [state.lastX, state.lastY] = getCoordinates(e, canvasElement);
+          e.preventDefault();
+        };
 
-        // Validação dos campos de assinatura
-        if (canvasColaborador.isBlank() || canvasSuporte.isBlank()) {
-          showMessage(
-            "As assinaturas do colaborador e do suporte são obrigatórias."
-          );
-          return;
-        }
+        const stopDraw = () => {
+          state.drawing = false;
+        };
 
-        btnSave.disabled = true;
-        btnSave.innerHTML = `<div class="spinner h-5 w-5 border-t-2 border-white rounded-full mx-auto"></div>`;
-        hideMessage();
+        const draw = (e) => {
+          if (!state.drawing) return;
+          e.preventDefault();
+          const [x, y] = getCoordinates(e, canvasElement);
 
-        try {
-          const docData = {
-            ...formData,
-            colaboradorSignatureDataUrl: canvasColaborador.getDataURL(),
-            suporteSignatureDataUrl: canvasSuporte.getDataURL(),
-            status: "ativo",
-            createdAt: Timestamp.now(), // Data/hora do servidor
-          };
+          state.ctx.beginPath();
+          state.ctx.moveTo(state.lastX, state.lastY);
+          state.ctx.lineTo(x, y);
+          state.ctx.stroke();
 
-          await addDoc(collection(db, COLLECTION_PATH), docData);
+          state.lastX = x;
+          state.lastY = y;
+        };
 
-          showMessage("Assinatura salva com sucesso!", "success");
-          resetForm();
-        } catch (error) {
-          console.error("Erro ao salvar no Firestore:", error);
-          showMessage("Erro ao salvar a assinatura. Tente novamente.");
-        } finally {
-          btnSave.disabled = false;
-          btnSave.textContent = "Salvar Assinatura";
-        }
-      }
+        const getCoordinates = (e, canvas) => {
+            const rect = canvas.getBoundingClientRect();
+            let x, y;
 
-      /**
-       * 5. Desativa um termo (muda o status)
-       */
-      async function deactivateSignature(id) {
-        if (!db || !COLLECTION_PATH) return;
-
-        try {
-          const docRef = doc(db, COLLECTION_PATH, id);
-          await updateDoc(docRef, {
-            status: "desativado",
-          });
-          // A lista irá se atualizar sozinha graças ao onSnapshot
-        } catch (error) {
-          console.error("Erro ao desativar:", error);
-          showMessage("Erro ao desativar o termo.");
-        }
-      }
-
-      // --- Inicialização do Aplicativo ---
-      // Garante que o DOM está pronto
-      document.addEventListener("DOMContentLoaded", () => {
-        // NOVO: Deixa o app principal borrado
-        mainAppContainer.style.filter = "blur(5px)";
-
-        // NOVO: Listener para o botão do modal
-        btnContinuar.addEventListener("click", () => {
-          const selectedEmpresa = empresaModalSelect.value;
-          if (!selectedEmpresa) {
-            modalMessageBox.textContent = "Por favor, selecione uma empresa.";
-            modalMessageBox.classList.remove("hidden");
-            return;
-          }
-
-          // Preencher o campo no formulário principal e desabilitá-lo
-          selectEmpresa.value = selectedEmpresa;
-          selectEmpresa.disabled = true; // Desabilita para não mudarem
-
-          // Esconder o modal e remover o blur
-          empresaModal.style.display = "none";
-          mainAppContainer.style.filter = "none";
-
-          // Inicia o Firebase DEPOIS que o modal for fechado
-          initializeAppAndAuth();
-        });
-
-        // Inicializa os canvases DEPOIS que a página carregar
-        canvasColaborador = new SignatureCanvas("colaboradorCanvas");
-        canvasSuporte = new SignatureCanvas("suporteCanvas");
-
-        // Adiciona os listeners dos botões
-        btnSave.addEventListener("click", saveSignature);
-        btnClear.addEventListener("click", resetForm);
-
-        // Adiciona listeners dos filtros
-        filterDept.addEventListener("change", renderAssinaturas);
-        filterStatus.addEventListener("change", renderAssinaturas);
-        filterEmpresa.addEventListener("change", renderAssinaturas);
-
-        // Adiciona listener para botões de desativar (delegação de evento)
-        listContainer.addEventListener("click", (e) => {
-          if (e.target && e.target.classList.contains("btn-deactivate")) {
-            const id = e.target.getAttribute("data-id");
-            if (id) {
-              deactivateSignature(id);
+            if (e.touches && e.touches.length > 0) { // Touch event
+                x = e.touches[0].clientX - rect.left;
+                y = e.touches[0].clientY - rect.top;
+            } else { // Mouse event
+                x = e.clientX - rect.left;
+                y = e.clientY - rect.top;
             }
+            return [x, y];
+        };
+
+
+        // Eventos para Mouse
+        canvasElement.addEventListener('mousedown', startDraw);
+        canvasElement.addEventListener('mouseup', stopDraw);
+        canvasElement.addEventListener('mouseout', stopDraw);
+        canvasElement.addEventListener('mousemove', draw);
+
+        // Eventos para Touch
+        canvasElement.addEventListener('touchstart', startDraw);
+        canvasElement.addEventListener('touchend', stopDraw);
+        canvasElement.addEventListener('touchcancel', stopDraw);
+        canvasElement.addEventListener('touchmove', draw);
+      }
+
+      function clearAllCanvases() {
+        Object.keys(canvases).forEach(id => {
+          const canvas = canvases[id];
+          if (canvas) {
+            const state = canvasState[id];
+            state.ctx.fillRect(0, 0, canvas.width, canvas.height);
+            state.isSigned = false;
           }
         });
+        document.getElementById('termType').value = '';
+        document.getElementById('term-agreement').checked = false;
+        updateTermContent();
+        displayMessage('Assinaturas e campos limpos. Você pode começar a desenhar novamente.', false);
+      }
 
-        // NOTA: initializeAppAndAuth() foi movido para o listener do
-        // botão 'btn-continuar' para garantir que o Firebase só
-        // conecte após a seleção da empresa.
-      });
+      // ----------------------------------------------------
+      // 4. LÓGICA DE PERSISTÊNCIA (Local Storage)
+      // ----------------------------------------------------
+      
+      function getAssinaturas() {
+          try {
+              const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+              // Garante que o status seja 'ativo' se não existir (para compatibilidade com dados antigos)
+              const assinaturas = data ? JSON.parse(data) : [];
+              return assinaturas.map(item => ({
+                  ...item,
+                  status: item.status || 'ativo' 
+              }));
+          } catch (e) {
+              console.error("Erro ao ler Local Storage:", e);
+              return [];
+          }
+      }
+
+      function saveAssinaturaData(newAssinatura) {
+          const assinaturas = getAssinaturas();
+          assinaturas.push(newAssinatura);
+          try {
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(assinaturas));
+              return true;
+          } catch (e) {
+              console.error("Erro ao escrever Local Storage:", e);
+              displayMessage('Erro ao salvar no armazenamento local do navegador. Local Storage cheio ou indisponível.', true);
+              return false;
+          }
+      }
+      
+      function updateAssinaturaStatus(id, newStatus) {
+          let assinaturas = getAssinaturas();
+          const index = assinaturas.findIndex(a => a.id === id);
+          
+          if (index !== -1) {
+              assinaturas[index].status = newStatus;
+              
+              try {
+                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(assinaturas));
+                  loadAndFilterAssinaturas(); // Recarrega a lista
+                  displayMessage(`Status do termo ${id} atualizado para ${newStatus.toUpperCase()}.`, false, 'message-box-consultar');
+                  return true;
+              } catch (e) {
+                  console.error("Erro ao atualizar Local Storage:", e);
+                  displayMessage('Erro ao atualizar o status.', true, 'message-box-consultar');
+                  return false;
+              }
+          }
+          return false;
+      }
+
+      async function saveAssinatura() {
+        if (!currentEmpresa) {
+            displayMessage('Por favor, selecione uma empresa no início.', true);
+            return;
+        }
+
+        const nameInput = document.getElementById('name').value.trim();
+        const docIdInput = document.getElementById('documentId').value.trim();
+        const emailInput = document.getElementById('email').value.trim();
+        const departmentInput = document.getElementById('department').value;
+        const centroCustoInput = document.getElementById('centroCusto').value.trim();
+        const termTypeInput = document.getElementById('termType').value;
+        const termAgreement = document.getElementById('term-agreement').checked;
+        
+        const colabCanvasState = canvasState['colaboradorCanvas'];
+        const suporteCanvasState = canvasState['suporteCanvas'];
+
+        // 1. Validação de Campos
+        if (!nameInput || !docIdInput || !emailInput || !departmentInput || !colabCanvasState.isSigned || !suporteCanvasState.isSigned || !termTypeInput || !termAgreement) {
+          displayMessage('Preencha todos os campos obrigatórios (incluindo Tipo de Termo, assinaturas e concordância com o termo)!', true, 'message-box');
+          return;
+        }
+        
+        // 2. Coleta de Dados
+        const assinaturaData = {
+          id: Date.now().toString(), // ID simples baseado no timestamp
+          name: nameInput,
+          documentId: docIdInput,
+          email: emailInput,
+          department: departmentInput,
+          centroCusto: centroCustoInput || 'N/A',
+          telefone: document.getElementById('telefone').value.trim() || 'N/A',
+          empresa: currentEmpresa,
+          termType: termTypeInput, 
+          colaboradorSignature: canvases.colaboradorCanvas.toDataURL('image/png'),
+          suporteSignature: canvases.suporteCanvas.toDataURL('image/png'),
+          status: 'ativo', // Novo termo é sempre ativo
+          createdAt: new Date().toISOString(),
+        };
+        
+        document.getElementById('btn-save').disabled = true;
+
+        // 3. Salvar no Local Storage
+        if (saveAssinaturaData(assinaturaData)) {
+            displayMessage('Assinatura salva com sucesso no Local Storage!', false, 'message-box');
+          
+            // Limpar formulário e canvas
+            document.getElementById('name').value = '';
+            document.getElementById('documentId').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('telefone').value = '';
+            document.getElementById('centroCusto').value = '';
+            clearAllCanvases();
+        }
+
+        document.getElementById('btn-save').disabled = false;
+      }
+      
+      function renderAssinaturasList(docs) {
+          const listElement = document.getElementById('assinaturas-list');
+          listElement.innerHTML = '';
+          
+          if (docs.length === 0) {
+              document.getElementById('empty-state').classList.remove('hidden');
+              return;
+          }
+          
+          document.getElementById('empty-state').classList.add('hidden');
+          
+          docs.forEach(data => {
+              const listItem = document.createElement('div');
+              const isActive = data.status === 'ativo';
+              
+              listItem.className = `term-item ${isActive ? '' : 'inactive'} bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 border border-gray-100`;
+              
+              const dateObj = new Date(data.createdAt);
+              const formattedDate = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR');
+              
+              const termBadge = TERM_MAP[data.termType] ? 
+                  `<span class="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700 mr-2">${TERM_MAP[data.termType].toUpperCase()}</span>` : 
+                  '';
+                  
+              const statusBadge = isActive ? 
+                  `<span class="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-700">ATIVO</span>` : 
+                  `<span class="text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-700">DESATIVADO</span>`;
+
+              const actionButton = isActive ? 
+                  `<button data-id="${data.id}" data-action="desativar" class="btn-status-action text-red-600 hover:text-red-800 font-medium text-sm transition-colors duration-150 ml-4">Desativar</button>` :
+                  `<button data-id="${data.id}" data-action="ativar" class="btn-status-action text-green-600 hover:text-green-800 font-medium text-sm transition-colors duration-150 ml-4">Reativar</button>`;
+
+
+              listItem.innerHTML = `
+                  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 mb-3">
+                      <h3 class="text-lg font-bold text-gray-800">${data.name}</h3>
+                      <div class="mt-2 sm:mt-0 flex items-center">
+                          ${termBadge}
+                          ${statusBadge}
+                      </div>
+                  </div>
+                  <div class="text-sm text-gray-600 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <p><strong>Documento:</strong> ${data.documentId}</p>
+                      <p><strong>Email:</strong> ${data.email}</p>
+                      <p><strong>Departamento:</strong> ${DEPARTMENT_MAP[data.department] || data.department}</p>
+                      <p><strong>C. Custo:</strong> ${data.centroCusto}</p>
+                      <p class="sm:col-span-2"><strong>Data:</strong> ${formattedDate}</p>
+                  </div>
+                  <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                    <button
+                        data-colab-sig="${data.colaboradorSignature}"
+                        data-suporte-sig="${data.suporteSignature}"
+                        data-name="${data.name}"
+                        class="btn-view-signature text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors duration-150"
+                    >
+                        Ver Assinaturas
+                    </button>
+                    ${actionButton}
+                  </div>
+              `;
+              listElement.appendChild(listItem);
+          });
+          
+          document.querySelectorAll('.btn-view-signature').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const colabSig = e.target.getAttribute('data-colab-sig');
+                const suporteSig = e.target.getAttribute('data-suporte-sig');
+                const name = e.target.getAttribute('data-name');
+                showSignatureModal(colabSig, suporteSig, name);
+            });
+          });
+          
+          document.querySelectorAll('.btn-status-action').forEach(button => {
+              button.addEventListener('click', (e) => {
+                  const id = e.target.getAttribute('data-id');
+                  const action = e.target.getAttribute('data-action');
+                  const newStatus = action === 'ativar' ? 'ativo' : 'desativado';
+                  updateAssinaturaStatus(id, newStatus);
+              });
+          });
+      }
+
+      function loadAndFilterAssinaturas() {
+        const allAssinaturas = getAssinaturas();
+
+        const searchTerm = document.getElementById('search-term').value.trim().toLowerCase();
+        const filterDept = document.getElementById('filter-department').value;
+        // O filtro de status agora é determinado pelo estado da sub-aba (currentViewStatus)
+        const filterStatus = currentViewStatus; 
+        
+        let filteredDocs = allAssinaturas.filter(data => {
+            // 1. Filtrar por Empresa (automático)
+            if (data.empresa !== currentEmpresa) {
+                return false;
+            }
+            
+            // 2. Filtrar por Status (Usando o estado da sub-aba)
+            if (data.status !== filterStatus) {
+                return false;
+            }
+
+            // 3. Filtrar por Departamento
+            if (filterDept !== 'todos' && data.department !== filterDept) {
+                return false;
+            }
+            
+            // 4. Filtrar por Termo de Busca (Nome ou Documento)
+            if (searchTerm) {
+                const nameMatch = data.name.toLowerCase().includes(searchTerm);
+                const docIdMatch = data.documentId.toLowerCase().includes(searchTerm);
+                if (!nameMatch && !docIdMatch) {
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        // Simulação de ordenação por data de criação (mais recente primeiro)
+        filteredDocs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        renderAssinaturasList(filteredDocs);
+      }
+
+      // ----------------------------------------------------
+      // 5. MODAL DE ASSINATURAS DETALHADAS
+      // ----------------------------------------------------
+
+      function showSignatureModal(colabSig, suporteSig, name) {
+        // Cria o modal dinamicamente para não poluir o HTML inicial
+        let modal = document.getElementById('signature-detail-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'signature-detail-modal';
+          modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-80 transition-opacity duration-300';
+          modal.innerHTML = `
+              <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg mx-4 transform scale-95 transition-transform duration-300">
+                  <h3 id="modal-title" class="text-xl font-bold text-gray-800 border-b pb-2 mb-4">Assinaturas</h3>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                          <p class="text-sm font-medium text-gray-600 mb-2">Assinatura Colaborador:</p>
+                          <img id="colab-img" src="" alt="Assinatura do Colaborador" class="w-full border rounded-lg p-2 bg-gray-50"/>
+                      </div>
+                      <div>
+                          <p class="text-sm font-medium text-gray-600 mb-2">Assinatura Suporte:</p>
+                          <img id="suporte-img" src="" alt="Assinatura do Suporte" class="w-full border rounded-lg p-2 bg-gray-50"/>
+                      </div>
+                  </div>
+                  
+                  <button id="close-detail-modal" class="w-full mt-6 px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">Fechar</button>
+              </div>
+          `;
+          document.body.appendChild(modal);
+          
+          document.getElementById('close-detail-modal').addEventListener('click', () => {
+              modal.classList.remove('active');
+          });
+          // Permite fechar clicando fora do conteúdo
+          modal.addEventListener('click', (e) => {
+             if (e.target === modal) {
+                 modal.classList.remove('active');
+             }
+          });
+        }
+        
+        document.getElementById('modal-title').textContent = `Assinaturas de ${name}`;
+        document.getElementById('colab-img').src = colabSig;
+        document.getElementById('suporte-img').src = suporteSig;
+        modal.classList.add('active'); // Usa a classe active para mostrar/esconder
+      }
+
+      // ----------------------------------------------------
+      // 6. LÓGICA DO MODAL DE EMPRESA
+      // ----------------------------------------------------
+      
+      function handleModalContinue() {
+        const select = document.getElementById('empresa-modal-select');
+        const messageBox = document.getElementById('modal-message-box');
+        currentEmpresa = select.value;
+
+        if (!currentEmpresa) {
+          messageBox.textContent = 'Por favor, selecione uma empresa para continuar.';
+          messageBox.classList.remove('hidden');
+          return;
+        }
+
+        messageBox.classList.add('hidden');
+        document.getElementById('empresa-modal').style.display = 'none';
+        document.getElementById('main-app-container').style.display = 'block';
+        
+        // Salva a empresa selecionada no Local Storage
+        localStorage.setItem('current_empresa', currentEmpresa);
+        
+        // Atualiza a UI principal com a empresa selecionada
+        const empresaNome = EMPRESA_MAP[currentEmpresa] || currentEmpresa;
+        document.getElementById('current-empresa-name').textContent = empresaNome;
+        
+        // Preenche o campo Empresa na aba de Assinatura
+        const mainEmpresaSelect = document.getElementById('empresa');
+        mainEmpresaSelect.innerHTML = `<option value="${currentEmpresa}">${empresaNome}</option>`;
+        
+        // Preenche o campo Empresa na aba de Consulta (somente o valor atual)
+        const filterEmpresaSelect = document.getElementById('filter-empresa');
+        filterEmpresaSelect.innerHTML = `<option value="${currentEmpresa}">${empresaNome}</option>`;
+
+        // Se a aba de consulta for a ativa, carrega e filtra os dados.
+        if (document.getElementById('tab-consultar').classList.contains('active')) {
+            loadAndFilterAssinaturas();
+        }
+        // Atualiza o termo na aba de Assinatura
+        updateTermContent();
+      }
+
+      // ----------------------------------------------------
+      // 7. EVENT LISTENERS
+      // ----------------------------------------------------
+
+      window.onload = () => {
+        // 1. Inicialização do Canvas
+        canvases.colaboradorCanvas = document.getElementById('colaboradorCanvas');
+        canvases.suporteCanvas = document.getElementById('suporteCanvas');
+        initCanvas(canvases.colaboradorCanvas);
+        initCanvas(canvases.suporteCanvas);
+
+        // Tenta carregar a empresa salva
+        const savedEmpresa = localStorage.getItem('current_empresa');
+        if (savedEmpresa && EMPRESA_MAP[savedEmpresa]) {
+            currentEmpresa = savedEmpresa;
+            document.getElementById('empresa-modal-select').value = savedEmpresa;
+            handleModalContinue();
+        } else {
+            // Se não houver empresa salva, exibe o modal
+            document.getElementById('empresa-modal').style.display = 'flex';
+        }
+
+        // 2. Botão Continuar do Modal
+        document.getElementById('btn-continuar').addEventListener('click', handleModalContinue);
+        
+        // 3. Botões de Ação na aba Assinar
+        document.getElementById('btn-save').addEventListener('click', saveAssinatura);
+        document.getElementById('btn-clear').addEventListener('click', clearAllCanvases);
+
+        // 4. Navegação por Abas Principais
+        document.getElementById('btn-tab-assinar').addEventListener('click', () => switchTab('assinar'));
+        document.getElementById('btn-tab-consultar').addEventListener('click', () => switchTab('consultar'));
+        
+        // 5. Navegação por Sub-abas (Ativos/Desativados)
+        document.getElementById('btn-status-ativo').addEventListener('click', () => switchStatusView('ativo'));
+        document.getElementById('btn-status-desativado').addEventListener('click', () => switchStatusView('desativado'));
+
+        // 6. Atualização e Validação do Termo
+        document.getElementById('termType').addEventListener('change', updateTermContent);
+        document.getElementById('name').addEventListener('input', updateTermContent);
+        document.getElementById('documentId').addEventListener('input', updateTermContent);
+
+        // 7. Filtros e Busca na aba Consultar
+        const updateFilterAndSearch = () => {
+            loadAndFilterAssinaturas();
+        };
+
+        // Aplica o debounce para a busca por texto
+        let searchTimeout;
+        document.getElementById('search-term').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(updateFilterAndSearch, 300); // Espera 300ms antes de filtrar
+        });
+
+        // Aplica filtro imediatamente para dropdowns
+        document.getElementById('filter-department').addEventListener('change', updateFilterAndSearch);
+
+        // Garante que a primeira tab principal e a primeira sub-tab estejam ativas ao carregar
+        switchTab('assinar');
+        switchStatusView('ativo');
+      };
+
     </script>
   </body>
 </html>
